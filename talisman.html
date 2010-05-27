@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+  <title>Talisman Calculator</title>
+<style type="text/css">
+.purple {background-color:Plum}
+.blue {background-color:LightSkyBlue}
+.green {background-color:PaleGreen}
+.white {background-color:white}
+.big {font-size:150%}
+</style>
+<script type="text/javascript">
+<!--
+// data from warhammeralliance.com forums, largely from the tables
+// Tamara made and the ensuing discussion
+var minLevel = new Array(1,6,6,11,11,21,21,31,31,36);
+var critDur = new Array(1,2,3,4,5,6,9,10,13,14);
+var powerVal = new Array(5,6,8,9,11,12,14,15,17,18);
+// powerVal assumes the first two values in Tamara's tables are off by one
+var afVal = new Array(22,30,37,45,52,60,67,75,82,90);
+
+function talisman(tier,color,head)
+{
+    if ( color > 3 ) { color = 3; }
+    var row = new Array(    2+tier+4*color,
+                            (color+1)+"%/"+ critDur[tier-1] + "d",
+                            5 + 5*tier + 15*color,
+                            powerVal[tier-1] + 6*color,
+                            afVal[tier-1] + 30*color,
+                            minLevel[tier-1] );
+    var tdOpen = '<td align="center">';
+    var tdClose = "</td>";
+    if ( head == 1 ) {
+        row = new Array(    "Stat",
+                            "Crit",
+                            "Resist",
+                            "Power",
+                            "AF",
+                            "Min Lvl" );
+        tdOpen = "<th>";
+        tdClose = "</th>";
+    }
+    if ( head == 2 ) {
+        tdOpen = tdOpen + "<b>";
+        tdClose = "</b>" + tdClose;
+    }
+    var out = "";
+    for (i = 0; i < 6; ++i) {
+        out += tdOpen + row[i] + tdClose;
+    }
+    return out;
+}
+
+function recalculate()
+{
+    var color = 0;
+    var power = 0;
+    var r = document.getElementById("results");
+    
+    if ( window.document.tf.box.checked == true ) {
+        power += 1;
+    }
+    if ( window.document.tf.lowskill.checked == true ) {
+        power -= 1;
+    }
+    for ( i = 0; i < 4; ++i ) {
+        if ( window.document.tf.color[i].checked == true ) {
+            color = parseInt(window.document.tf.color[i].value);
+        }
+    }
+    for ( i = 0; i < 9; ++i )
+    {
+        if ( window.document.tf.fragment[i].checked == true ) {
+            power += parseInt(window.document.tf.fragment[i].value);
+        }
+    }
+    for ( i = 0; i < 10; ++i )
+    {
+        if ( window.document.tf.curio[i].checked == true ) {
+            power += parseInt(window.document.tf.curio[i].value);
+        }
+    }
+    for ( i = 0; i < 10; ++i )
+    {
+        if ( window.document.tf.gold[i].checked == true ) {
+            power += parseInt(window.document.tf.gold[i].value);
+        }
+    }
+    for ( i = 0; i < 10; ++i )
+    {
+        if ( window.document.tf.essence[i].checked == true ) {
+            power += parseInt(window.document.tf.essence[i].value);
+        }
+    }
+    var makeTier = powerToTier(power);    
+    var out = '<p>What you will usually make:</p><p><table rules="all" width="50%"><tr><th>Total Power</th>' + talisman(0,0,1) + "</tr>";
+    if ( makeTier < 10 ) {
+        var gap = tierToPower(makeTier+1) - power;
+        out += '<tr class="' + colorClass(color) + '">' + 
+            '<td align="center">' + tierToPower(makeTier+1) + " (+" + gap + ")</td>" + talisman(makeTier+1,color,0) + "</tr>";
+    }
+    out += '<tr style="font-size:125%" class="' + colorClass(color) + '">' +
+        '<td align="center""><b>' + power + "</b></td>" + talisman(makeTier,color,2) + "</tr>";
+    if ( makeTier > 1 ) {
+        var gap = power - tierToPower(makeTier) + 1;
+        out += '<tr class="' + colorClass(color) + '">' +
+            '<td align="center">' + (tierToPower(makeTier) - 1) + " (-" + gap + ")</td>" + talisman(makeTier-1,color,0) + "</tr>";
+    }
+    out += "</table></p>";
+    out += "<p>If you get lucky:</p>";
+    out += '<p><table rules="all" width="50%"><tr><th></th>' + talisman(0,0,1) + '</tr>';
+    out += '<tr class="' + colorClass(color) + '">' +
+        '<td align="center">Special</td>' + talisman(powerToTier(power+6),color,0) + '</tr>';
+    out += '<tr class="' + colorClass(color+1) + '">' +
+        '<td align="center">Awesome</td>' + talisman(powerToTier(power+1),color + 1,0) + '</tr>';
+    out += '</table></p>';
+    r.innerHTML = out;
+}
+
+function powerToTier(power)
+{
+    var tier = 1;
+    for ( nextTier = 2; nextTier <= 10; ++nextTier ) {
+        if ( tierToPower(nextTier) > power ) { return tier; }
+        tier = nextTier;
+    }
+    return tier;
+}
+
+function tierToPower(tier)
+{
+    var power = 5*tier-3;
+    if ( tier > 1 ) { power += 2; }
+    if ( tier > 4 ) { power += 1; }
+    if ( tier > 8 ) { power += 1; }
+    return power;
+}
+
+function colorClass(color)
+{
+    switch(color) {
+        case 0: return "white"; break;
+        case 1: return "green"; break;
+        case 2: return "blue"; break;
+        default: return "purple"; break;
+    }
+}
+
+function setall(skill)
+{
+    var tier = Math.floor(skill/25) + 1
+    for ( i = 0; i < 10; ++i )
+    {
+        if ( i != 9 ) {
+            window.document.tf.fragment[i].checked = false;
+        }
+        window.document.tf.fragment[tier-1].checked = true;
+        
+        window.document.tf.curio[i].checked = false;
+        window.document.tf.curio[tier].checked = true;
+        
+        window.document.tf.gold[i].checked = false;
+        window.document.tf.gold[tier].checked = true;
+
+        window.document.tf.essence[i].checked = false;
+        window.document.tf.essence[tier].checked = true;
+    }
+    recalculate();
+}
+
+//-->
+</script></head>
+<body onLoad="recalculate();">
+  <form action="#" method="get" name="tf">
+  <p>
+  <table width="50%" rules="all">
+        <tr><th colspan="4">Fragment Color</th></tr>
+        <tr align="center">
+            <td><input name="color" type="radio" value="0" onClick="recalculate();" />white</td>
+            <td><input name="color" type="radio" value="1" onClick="recalculate();"/>green</td>
+            <td><input name="color" type="radio" value="2" onClick="recalculate();"/>blue</td>
+            <td><input name="color" type="radio" value="3" checked onClick="recalculate();" />purple</td>
+        </tr>
+  </table>
+  </p>
+  <p>
+  <input name="box" type="checkbox" onClick="recalculate();" />200 container<br/>
+  <input name="lowskill" type="checkbox" onClick="recalculate();" />Penalty for low skill<br/>
+  </p>
+  <p>
+  <table rules="all" width="100%">
+        <tr align="center">
+            <td colspan="2">Skill:</td>
+            <td ondblclick="setall(1);">1</td>
+            <td ondblclick="setall(25);">25</td>
+            <td ondblclick="setall(50);">50</td>
+            <td ondblclick="setall(75);">75</td>
+            <td ondblclick="setall(100);">100</td>
+            <td ondblclick="setall(125);">125</td>
+            <td ondblclick="setall(150);">150</td>
+            <td ondblclick="setall(175);">175</td>
+            <td ondblclick="setall(200);">200</td>
+        </tr>
+        <tr align="center">
+            <td colspan="2">Fragment:</td>
+            <td><input name="fragment" type="radio" value="2" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="4" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="6" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="8" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="10" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="12" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="14" onClick="recalculate();" /></td>
+            <td><input name="fragment" type="radio" value="16" onClick="recalculate();" checked /></td>
+            <td><input name="fragment" type="radio" value="18" onClick="recalculate();" /></td>
+        </tr>
+        <tr align="center">
+            <td>Curio:</td>
+            <td><input name="curio" type="radio" value="0" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="1" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="2" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="3" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="4" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="5" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="6" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="7" onClick="recalculate();" /></td>
+            <td><input name="curio" type="radio" value="8" onClick="recalculate();" checked /></td>
+            <td><input name="curio" type="radio" value="9" onClick="recalculate();" /></td>
+        </tr>
+        <tr align="center">
+            <td>Gold:</td>
+            <td><input name="gold" type="radio" value="0" checked onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="1" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="2" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="3" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="4" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="5" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="6" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="7" onClick="recalculate();" /></td>
+            <td><input name="gold" type="radio" value="8" onClick="recalculate();" checked /></td>
+            <td><input name="gold" type="radio" value="9" onClick="recalculate();" /></td>
+        </tr>
+        <tr align="center">
+            <td>Essence:</td>
+            <td><input name="essence" type="radio" value="0" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="1" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="2" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="3" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="4" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="5" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="6" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="7" onClick="recalculate();" /></td>
+            <td><input name="essence" type="radio" value="8" onClick="recalculate();" checked /></td>
+            <td><input name="essence" type="radio" value="9" onClick="recalculate();" /></td>
+        </tr>
+  </table>
+  </p>
+  </form>
+  <div id="results"><p>results go here</p>
+  </div>
+</body>
+</html>

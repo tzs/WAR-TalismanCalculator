@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Talisman Calculator</title>
+  <meta name="viewport" content="width=320" />
+  <meta name="viewport" content="initial-scale=1.0" />
+<style type="text/css">
+.purple {background-color:Plum}
+.blue {background-color:LightSkyBlue}
+.green {background-color:PaleGreen}
+.white {background-color:white}
+.big {font-size:150%}
+.res1 {width:100%}
+.res2 {width:100%}
+.powerin {width:100%}
+.input {font-weight:bold}
+</style>
+<script type="text/javascript">
+<!--
+// data from warhammeralliance.com forums, largely from the tables
+// Tamara made and the ensuing discussion
+var minLevel = new Array(1,6,6,11,11,21,21,31,31,36);
+var critDur = new Array(1,2,3,4,5,6,9,10,13,14);
+var powerVal = new Array(5,6,8,9,11,12,14,15,17,18);
+var afVal = new Array(22,30,37,45,52,60,67,75,82,90);
+var colorList = new Array('white', 'green', 'blue', 'purple');
+var kindList = new Array('Stat', 'Crit', 'Resist', 'Power', 'Armor');
+var fragPowerList = new Array('1','25','50','75','100','125','150','175','200');
+var otherPowerList = new Array('none','1','25','50','75','100','125','150','175','200');
+
+function indexInArray(a,item)
+{
+    for( i = 0; i < a.length; ++i )
+        if ( a[i] == item )
+            return i;
+    return -1;
+}
+
+function arrayStep(a,item,dir)
+{
+    var i = indexInArray(a, item);
+    i += dir;
+    if ( i < 0 )
+        i = a.length - 1;
+    else if ( i >= a.length )
+        i = 0;
+    return a[i];
+}
+
+function talisman(tier,color,head)
+{
+    if ( color > 3 ) { color = 3; }
+    var kind = indexInArray(kindList, document.getElementById('kind').innerHTML);
+    
+    var talismanData = new Array(   2+tier+4*color,
+                                    (color+1)+"%/"+ critDur[tier-1] + "d",
+                                    5 + 5*tier + 15*color,
+                                    powerVal[tier-1] + 6*color,
+                                    afVal[tier-1] + 30*color,
+                                    minLevel[tier-1] );
+    var dataNames = new Array(  "Stat",
+                                "Crit",
+                                "Resist",
+                                "Power",
+                                "AF",
+                                "Min Lvl" );
+    var tdOpen = '<td align="center">';
+    var tdClose = "</td>";
+    var row = new Array(    talismanData[kind],
+                            talismanData[5] );
+    if ( head == 1 ) {
+        tdOpen = "<th>";
+        tdClose = "</th>";
+         var row = new Array(   dataNames[kind],
+                                dataNames[5] );
+   }
+    if ( head == 2 ) {
+        tdOpen = tdOpen + "<b>";
+        tdClose = "</b>" + tdClose;
+    }
+    var out = "";
+    for (i = 0; i < 2; ++i) {
+        out += tdOpen + row[i] + tdClose;
+    }
+    return out;
+}
+
+function recalculate()
+{
+    var color = indexInArray(colorList, document.getElementById('color').innerHTML);
+    var power = 0;
+    
+    if ( document.getElementById('box').checked == true ) {
+        power += 1;
+    }
+    if ( document.getElementById('lowskill').checked == true ) {
+        power -= 1;
+    }
+    power += indexInArray(fragPowerList, document.getElementById('frag').innerHTML)*2+2;
+    power += indexInArray(otherPowerList, document.getElementById('curio').innerHTML);
+    power += indexInArray(otherPowerList, document.getElementById('gold').innerHTML);
+    power += indexInArray(otherPowerList, document.getElementById('essence').innerHTML);
+
+    var makeTier = powerToTier(power);    
+    var out = '<p>What you will usually make:</p><p><table rules="all" class="res1"><tr><th>Total Power</th>' + talisman(0,0,1) + "</tr>";
+    if ( makeTier < 10 ) {
+        var gap = tierToPower(makeTier+1) - power;
+        out += '<tr class="' + colorClass(color) + '">' + 
+            '<td align="center">' + tierToPower(makeTier+1) + " (+" + gap + ")</td>" + talisman(makeTier+1,color,0) + "</tr>";
+    }
+    out += '<tr style="font-size:125%" class="' + colorClass(color) + '">' +
+        '<td align="center""><b>' + power + "</b></td>" + talisman(makeTier,color,2) + "</tr>";
+    if ( makeTier > 1 ) {
+        var gap = power - tierToPower(makeTier) + 1;
+        out += '<tr class="' + colorClass(color) + '">' +
+            '<td align="center">' + (tierToPower(makeTier) - 1) + " (-" + gap + ")</td>" + talisman(makeTier-1,color,0) + "</tr>";
+    }
+    out += "</table></p>";
+    out += "<p>If you get lucky:</p>";
+    out += '<p><table rules="all" class="res2"><tr><th></th>' + talisman(0,0,1) + '</tr>';
+    out += '<tr class="' + colorClass(color) + '">' +
+        '<td align="center">Special</td>' + talisman(powerToTier(power+6),color,0) + '</tr>';
+    out += '<tr class="' + colorClass(color+1) + '">' +
+        '<td align="center">Awesome</td>' + talisman(powerToTier(power+1),color + 1,0) + '</tr>';
+    out += '</table></p>';
+    document.getElementById("results").innerHTML = out;
+}
+
+function powerToTier(power)
+{
+    var tier = 1;
+    for ( nextTier = 2; nextTier <= 10; ++nextTier ) {
+        if ( tierToPower(nextTier) > power ) { return tier; }
+        tier = nextTier;
+    }
+    return tier;
+}
+
+function tierToPower(tier)
+{
+    var power = 5*tier-3;
+    if ( tier > 1 ) { power += 2; }
+    if ( tier > 4 ) { power += 1; }
+    if ( tier > 8 ) { power += 1; }
+    return power;
+}
+
+function colorClass(color)
+{
+    switch(color) {
+        case 0: return "white"; break;
+        case 1: return "green"; break;
+        case 2: return "blue"; break;
+        default: return "purple"; break;
+    }
+}
+
+function roll(col,dir)
+{
+    var e = document.getElementById(col);
+    var itemText = e.innerHTML;
+    if ( col == 'color' ) {
+        e.innerHTML = arrayStep(colorList, itemText, dir);
+    }
+    else if ( col == 'kind' )
+    {
+        e.innerHTML = arrayStep(kindList, itemText, dir);
+    }
+    else if ( col == 'frag' )
+    {
+        e.innerHTML = arrayStep(fragPowerList, itemText, dir);
+    } else {
+        e.innerHTML = arrayStep(otherPowerList, itemText, dir);
+    }
+    recalculate();
+}
+
+//-->
+</script></head>
+<body onload="recalculate();">
+  <form action="#" method="get">
+  <p>
+  <input id="box" type="checkbox" onclick="recalculate();" />200 container
+  <input id="lowskill" type="checkbox" onclick="recalculate();" />Penalty for low skill
+  </p>
+        <table class="powerin" rules="all">
+            <tr>
+                <th>Color</th>
+                <th>Kind</th>
+                <th>Fragment</th>
+                <th>Curio</th>
+                <th>Gold</th>
+                <th>Essence</th>
+            </tr>
+            <tr align="center">
+                <td onclick="roll('color',1);">+</td>
+                <td onclick="roll('kind',1);">+</td>
+                <td onclick="roll('frag',1);">+</td>
+                <td onclick="roll('curio',1);">+</td>
+                <td onclick="roll('gold',1);">+</td>
+                <td onclick="roll('essence',1);">+</td>
+            </tr>
+            <tr align="center">
+                <td><span id="color">purple</span></td>
+                <td><span id="kind">Stat</span></td>
+                <td><span id="frag">175</span></td>
+                <td><span id="curio">175</span></td>
+                <td><span id="gold">175</span></td>
+                <td><span id="essence">175</span></td>
+            </tr>
+            <tr align="center">
+                <td onclick="roll('color',-1);">-</td>
+                <td onclick="roll('kind',-1);">-</td>
+                <td onclick="roll('frag',-1);">-</td>
+                <td onclick="roll('curio',-1);">-</td>
+                <td onclick="roll('gold',-1);">-</td>
+                <td onclick="roll('essence',-1);">-</td>
+            </tr>
+        </table>
+  </form>
+  <div id="results">
+  </div>
+</body>
+</html>
