@@ -17,7 +17,11 @@
 // http://home.comcast.net/~serapisphoenix/warhammer/talisman.html
 var tierToPower = new Array(0,2,9,14,19,24,29,34,39,45,51);
 var minLevel = new Array(1,4,8,12,16,20,24,28,32,36);
-var critDur = new Array('1 day*','2 days*','3 days*','4 days*','5 days*','6 days','9 days','10 days','13 days','14 days');
+var critDur = new Array('1 day*', '2 days*', '3 days*',
+                    '4 days*', '5 days*', '6 days',
+                    '9 days','10 days','13 days',
+                    '14 days');
+var critLvl = new Array(1,6,6,11,11,21,21,31,31,36);
 var statVal = new Array(
         new Array(3,7,11,15),
         new Array(4,8,12,16),
@@ -66,6 +70,13 @@ var resistVal = new Array(
         new Array(50,64,78,91),
         new Array(55,'','','')
     );
+var cols = new Array(   "Stat",
+                        "Crit",
+                        "Resist",
+                        "Power",
+                        "AF",
+                        "Min Lvl",
+                        "Min Lvl<br/>(crit talismans)");
 
 function talisman(tier,color,head)
 {
@@ -74,29 +85,24 @@ function talisman(tier,color,head)
     var tdOpen = '<td align="center">';
     var tdClose = "</td>";
     if ( head == 1 ) {
-        row = new Array(    "Stat",
-                            "Crit",
-                            "Resist",
-                            "Power",
-                            "AF",
-                            "Min Lvl" );
+        row = cols;
         tdOpen = "<th>";
         tdClose = "</th>";
     } else {
         row = new Array(        statVal[tier-1][color],
-                                (color+1)+"%, "+ critDur[tier-1],
+                                (color+1)+"% "+ critDur[tier-1],
                                 resistVal[tier-1][color],
                                 powerVal[tier-1][color],
                                 afVal[tier-1][color],
-                                minLevel[tier-1] );
-        
+                                minLevel[tier-1],
+                                critLvl[tier-1] );
     }
     if ( head == 2 ) {
         tdOpen = tdOpen + "<b>";
         tdClose = "</b>" + tdClose;
     }
     var out = "";
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 7; ++i) {
         out += tdOpen + row[i] + tdClose;
     }
     return out;
@@ -161,11 +167,13 @@ function recalculate()
     out += "<p>If you make something...</p>";
     out += '<p><table rules="all" width="50%"><tr><th></th>' + talisman(0,0,1) + '</tr>';
     out += '<tr class="' + colorClass(color) + '">' +
-        '<td align="center">...Special (+crit modifer)</td>' + talisman(powerToTier(power+6),color,0) + '</tr>';
+        '<td align="center">...Special</td>' + talisman(powerToTier(power+6),color,0) + '</tr>';
     out += '<tr class="' + colorClass(color+1) + '">' +
-        '<td align="center">... Awesome (+special modifer)</td>' + talisman(powerToTier(power+1),color + 1,0) + '</tr>';
+        '<td align="center">... Awesome</td>' + talisman(powerToTier(power+1),color + 1,0) + '</tr>';
     out += '</table></p>';
-    out += '<p>Items marked with an asterisk are extrapolated and need verification.</p>';
+    out += '<p>Items marked with an asterisk are extrapolated and need verification.<br/>';
+    out += 'Chance to make something special controlled by crit modifer on curio.<br/>';
+    out += 'Chance to make something awesome controlled by special modifier on container.</p>';
     r.innerHTML = out;
 }
 

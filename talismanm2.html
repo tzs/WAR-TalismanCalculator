@@ -18,63 +18,102 @@
 </style>
 <script type="text/javascript">
 <!--
-// data from warhammeralliance.com forums, largely from the tables
-// Tamara made and the ensuing discussion
-var minLevel = new Array(1,6,6,11,11,21,21,31,31,36);
-var critDur = new Array(1,2,3,4,5,6,9,10,13,14);
-var powerVal = new Array(5,6,8,9,11,12,14,15,17,18);
-var afVal = new Array(22,30,37,45,52,60,67,75,82,90);
 var colorList = new Array('white', 'green', 'blue', 'purple');
 var kindList = new Array('Stat', 'Crit', 'Resist', 'Power', 'Armor');
 var fragPowerList = new Array('1','25','50','75','100','125','150','175','200');
 var otherPowerList = new Array('none','1','25','50','75','100','125','150','175','200');
 
-function indexInArray(a,item)
-{
-    for( i = 0; i < a.length; ++i )
-        if ( a[i] == item )
-            return i;
-    return -1;
-}
-
-function arrayStep(a,item,dir)
-{
-    var i = indexInArray(a, item);
-    i += dir;
-    if ( i < 0 )
-        i = a.length - 1;
-    else if ( i >= a.length )
-        i = 0;
-    return a[i];
-}
+// Data from the tables Seraphisphoenix and others developed
+// on the warhammeronline and warhammeralliance forums, and
+// Seraphisphoenix published at:
+// http://home.comcast.net/~serapisphoenix/warhammer/talisman.html
+var tierToPower = new Array(0,2,9,14,19,24,29,34,39,45,51);
+var minLevel = new Array(1,4,8,12,16,20,24,28,32,36);
+var critDur = new Array('1 day*', '2 days*', '3 days*',
+                    '4 days*', '5 days*', '6 days',
+                    '9 days','10 days','13 days',
+                    '14 days');
+var critLvl = new Array(1,6,6,11,11,21,21,31,31,36);
+var statVal = new Array(
+        new Array(3,7,11,15),
+        new Array(4,8,12,16),
+        new Array(5,9,13,17),
+        new Array(6,10,14,18),
+        new Array(7,11,15,19),
+        new Array(8,12,16,20),
+        new Array(9,13,17,21),
+        new Array(10,14,18,22),
+        new Array(11,15,19,23),
+        new Array(12,16,20,24)
+    );
+var powerVal = new Array(
+        new Array(5,11,17,23),
+        new Array(6,12,18,24),
+        new Array(8,14,20,26),
+        new Array(9,15,21,27),
+        new Array(11,17,23,29),
+        new Array(12,18,24,30),
+        new Array(14,20,26,32),
+        new Array(15,21,27,33),
+        new Array(17,23,29,35),
+        new Array(18,24,30,36)
+    );
+var afVal = new Array(
+        new Array(22,30,'37*','44*'),
+        new Array('30*',40,'50*','60*'),
+        new Array(37,50,62,74),
+        new Array(45,60,75,90),
+        new Array(52,70,87,104),
+        new Array(60,80,100,120),
+        new Array(67,90,112,134),
+        new Array(75,100,125,150),
+        new Array(82,110,137,164),
+        new Array('90*','120*','150*','180*')
+    );
+var resistVal = new Array(
+        new Array('10*','','',''),
+        new Array('15*','','',''),
+        new Array(20,26,'',''),
+        new Array(25,32,'',''),
+        new Array(30,39,'',''),
+        new Array(35,45,'',''),
+        new Array(40,51,62,''),
+        new Array(45,58,70,''),
+        new Array(50,64,78,91),
+        new Array(55,'','','')
+    );
+var cols = new Array(   "Stat",
+                        "Crit",
+                        "Resist",
+                        "Power",
+                        "AF",
+                        "Min Lvl",
+                        "Min Lvl (crit talismans)");
 
 function talisman(tier,color,head)
 {
     if ( color > 3 ) { color = 3; }
     var kind = indexInArray(kindList, document.getElementById('kind').innerHTML);
-    
-    var talismanData = new Array(   2+tier+4*color,
-                                    (color+1)+"%/"+ critDur[tier-1] + "d",
-                                    5 + 5*tier + 15*color,
-                                    powerVal[tier-1] + 6*color,
-                                    afVal[tier-1] + 30*color,
-                                    minLevel[tier-1] );
-    var dataNames = new Array(  "Stat",
-                                "Crit",
-                                "Resist",
-                                "Power",
-                                "AF",
-                                "Min Lvl" );
+    var row;
     var tdOpen = '<td align="center">';
     var tdClose = "</td>";
-    var row = new Array(    talismanData[kind],
-                            talismanData[5] );
     if ( head == 1 ) {
+        row = new Array(    cols[kind],
+                            cols[5] );
         tdOpen = "<th>";
         tdClose = "</th>";
-         var row = new Array(   dataNames[kind],
-                                dataNames[5] );
-   }
+    } else {
+        var talismanData = new Array(   statVal[tier-1][color],
+                                        (color+1)+"%, "+ critDur[tier-1],
+                                        resistVal[tier-1][color],
+                                        powerVal[tier-1][color],
+                                        afVal[tier-1][color],
+                                        minLevel[tier-1],
+                                        critLvl[tier-1] );
+
+        row = new Array(    talismanData[kind],
+                            talismanData[kind==1?6:5] );
+    }
     if ( head == 2 ) {
         tdOpen = tdOpen + "<b>";
         tdClose = "</b>" + tdClose;
@@ -105,16 +144,16 @@ function recalculate()
     var makeTier = powerToTier(power);    
     var out = '<p>What you will usually make:</p><p><table rules="all" class="res1"><tr><th>Total Power</th>' + talisman(0,0,1) + "</tr>";
     if ( makeTier < 10 ) {
-        var gap = tierToPower(makeTier+1) - power;
+        var gap = tierToPower[makeTier+1] - power;
         out += '<tr class="' + colorClass(color) + '">' + 
-            '<td align="center">' + tierToPower(makeTier+1) + " (+" + gap + ")</td>" + talisman(makeTier+1,color,0) + "</tr>";
+            '<td align="center">' + tierToPower[makeTier+1] + " (+" + gap + ")</td>" + talisman(makeTier+1,color,0) + "</tr>";
     }
     out += '<tr style="font-size:125%" class="' + colorClass(color) + '">' +
         '<td align="center""><b>' + power + "</b></td>" + talisman(makeTier,color,2) + "</tr>";
     if ( makeTier > 1 ) {
-        var gap = power - tierToPower(makeTier) + 1;
+        var gap = power - tierToPower[makeTier] + 1;
         out += '<tr class="' + colorClass(color) + '">' +
-            '<td align="center">' + (tierToPower(makeTier) - 1) + " (-" + gap + ")</td>" + talisman(makeTier-1,color,0) + "</tr>";
+            '<td align="center">' + (tierToPower[makeTier] - 1) + " (-" + gap + ")</td>" + talisman(makeTier-1,color,0) + "</tr>";
     }
     out += "</table></p>";
     out += "<p>If you get lucky:</p>";
@@ -124,6 +163,9 @@ function recalculate()
     out += '<tr class="' + colorClass(color+1) + '">' +
         '<td align="center">Awesome</td>' + talisman(powerToTier(power+1),color + 1,0) + '</tr>';
     out += '</table></p>';
+    out += '<p>Items marked with an asterisk are extrapolated and need verification.<br/>';
+    out += 'Chance to make something special controlled by crit modifer on curio.<br/>';
+    out += 'Chance to make something awesome controlled by special modifier on container.</p>';
     document.getElementById("results").innerHTML = out;
 }
 
@@ -131,19 +173,29 @@ function powerToTier(power)
 {
     var tier = 1;
     for ( nextTier = 2; nextTier <= 10; ++nextTier ) {
-        if ( tierToPower(nextTier) > power ) { return tier; }
+        if ( tierToPower[nextTier] > power ) { return tier; }
         tier = nextTier;
     }
     return tier;
 }
 
-function tierToPower(tier)
+function indexInArray(a,item)
 {
-    var power = 5*tier-3;
-    if ( tier > 1 ) { power += 2; }
-    if ( tier > 4 ) { power += 1; }
-    if ( tier > 8 ) { power += 1; }
-    return power;
+    for( i = 0; i < a.length; ++i )
+        if ( a[i] == item )
+            return i;
+    return -1;
+}
+
+function arrayStep(a,item,dir)
+{
+    var i = indexInArray(a, item);
+    i += dir;
+    if ( i < 0 )
+        i = a.length - 1;
+    else if ( i >= a.length )
+        i = 0;
+    return a[i];
 }
 
 function colorClass(color)
