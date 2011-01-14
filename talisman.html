@@ -15,13 +15,14 @@
 // on the warhammeronline and warhammeralliance forums, and
 // Seraphisphoenix published at:
 // http://home.comcast.net/~serapisphoenix/warhammer/talisman.html
+// Using the 2011-01-11 version of Seraphosphoenix's data
 var tierToPower = new Array(0,2,9,14,19,24,29,34,39,45,51);
 var minLevel = new Array(1,4,8,12,16,20,24,28,32,36);
-var critDur = new Array('1 day*', '2 days*', '3 days*',
-                    '4 days*', '5 days*', '6 days',
+var critDur = new Array('1 day', '2 days', '2 days',
+                    '4 days', '5 days', '6 days',
                     '9 days','10 days','13 days',
                     '14 days');
-var critLvl = new Array(1,6,6,11,11,21,21,31,31,36);
+var critLvl = new Array(1,4,8,12,16,20,24,28,32,36);
 var statVal = new Array(
         new Array(3,7,11,15),
         new Array(4,8,12,16),
@@ -47,8 +48,8 @@ var powerVal = new Array(
         new Array(18,24,30,36)
     );
 var afVal = new Array(
-        new Array(22,30,'37*','44*'),
-        new Array('30*',40,'50*','60*'),
+        new Array(22,30,37,44),
+        new Array(30,40,50,60),
         new Array(37,50,62,74),
         new Array(45,60,75,90),
         new Array(52,70,87,104),
@@ -56,19 +57,19 @@ var afVal = new Array(
         new Array(67,90,112,134),
         new Array(75,100,125,150),
         new Array(82,110,137,164),
-        new Array('90*','120*','150*','180*')
+        new Array('90*','120*','150*',180)
     );
 var resistVal = new Array(
-        new Array('10*','','',''),
-        new Array('15*','','',''),
-        new Array(20,26,'',''),
-        new Array(25,32,'',''),
-        new Array(30,39,'',''),
-        new Array(35,45,'',''),
-        new Array(40,51,62,''),
-        new Array(45,58,70,''),
-        new Array(50,64,78,91),
-        new Array(55,'','','')
+        new Array(10,13,'16*','19*'),
+        new Array(15,20,'24*','28*'),
+        new Array(20,26,'32*','37*'),
+        new Array(25,32,39,'46*'),
+        new Array(30,39,47,'55*'),
+        new Array(35,45,55,'64*'),
+        new Array(40,51,62,'73*'),
+        new Array(45,58,70,82),
+        new Array('50*',64,78,91),
+        new Array('55*','70*','85*','100*')
     );
 var cols = new Array(   "Stat",
                         "Crit",
